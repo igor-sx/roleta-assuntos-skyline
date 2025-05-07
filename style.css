@@ -4,7 +4,7 @@ body {
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    background-color: #2c2c2c; /* Dark background like the image */
+    background-color: #2c2c2c;
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 20px;
@@ -21,7 +21,7 @@ body {
 
 #rouletteCanvas {
     display: block;
-    transition: transform 5s cubic-bezier(0.25, 0.1, 0.25, 1); /* Smooth spin stop */
+    transition: transform 5s cubic-bezier(0.15, 0.45, 0.35, 1);
 }
 
 .pointer {
@@ -29,11 +29,11 @@ body {
     height: 0;
     border-left: 20px solid transparent;
     border-right: 20px solid transparent;
-    border-top: 30px solid #f0f0f0; /* Light gray pointer */
+    border-top: 30px solid #f0f0f0;
     position: absolute;
-    top: -15px; /* Adjust based on wheel size and pointer size */
+    top: -15px;
     left: 50%;
-    transform: translateX(-50%) rotate(180deg); /* Points down towards the wheel edge */
+    transform: translateX(-50%) rotate(180deg);
     z-index: 10;
 }
 
@@ -66,7 +66,7 @@ body {
     color: white;
     font-weight: bold;
     text-align: center;
-    min-height: 24px; /* Prevent layout shift */
+    min-height: 24px;
 }
 
 .controls {
@@ -85,6 +85,58 @@ body {
     margin-bottom: 15px;
     color: #e0e0e0;
 }
+
+.segment-count-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.segment-count-controls label {
+    font-size: 14px;
+    color: #cccccc;
+}
+
+.segment-count-controls input[type="number"] {
+    width: 50px;
+    padding: 6px;
+    text-align: center;
+    border: 1px solid #555;
+    background-color: #444;
+    color: white;
+    border-radius: 4px;
+    font-size: 14px;
+    -moz-appearance: textfield; /* Firefox */
+}
+.segment-count-controls input[type="number"]::-webkit-outer-spin-button,
+.segment-count-controls input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+
+.segment-count-controls button {
+    padding: 6px 10px;
+    font-size: 16px;
+    font-weight: bold;
+    background-color: #555;
+    color: white;
+    border: 1px solid #666;
+    border-radius: 4px;
+    cursor: pointer;
+    min-width: 30px;
+}
+.segment-count-controls button:hover {
+    background-color: #666;
+}
+.segment-count-controls button:disabled {
+    background-color: #484848;
+    color: #888;
+    cursor: not-allowed;
+}
+
 
 #segmentInputs {
     display: grid;

@@ -5,51 +5,75 @@ const updateWheelButton = document.getElementById('updateWheelButton');
 const winnerDisplay = document.getElementById('winnerDisplay');
 const segmentInputsContainer = document.getElementById('segmentInputs');
 
-const numSegments = 10;
-const wheelRadius = 200; // Adjust size as needed
-const innerRadiusFraction = 0.2; // How large the central white circle is
+const addSegmentButton = document.getElementById('addSegmentButton');
+const removeSegmentButton = document.getElementById('removeSegmentButton');
+const numSegmentsInput = document.getElementById('numSegmentsInput');
+
+const wheelRadius = 200;
+const innerRadiusFraction = 0.2;
 
 canvas.width = wheelRadius * 2;
 canvas.height = wheelRadius * 2;
 
-// Colors inspired by the image (Google-like colors)
 const segmentColors = [
-    '#4285F4', // Blue
-    '#DB4437', // Red
-    '#F4B400', // Yellow
-    '#0F9D58', // Green
-    '#4285F4',
-    '#DB4437',
-    '#F4B400',
-    '#0F9D58',
-    '#4285F4',
-    '#DB4437'
+    '#4285F4', '#DB4437', '#F4B400', '#0F9D58', // Google Colors
+    '#7F4FC9', '#FF6D00', '#00ACC1', '#FF4081', // Some more vibrant colors
+    '#4E342E', '#546E7A'
 ];
 
-let segmentTexts = [
-    "Opção 1", "Opção 2", "Opção 3", "Opção 4", "Opção 5",
-    "Opção 6", "Opção 7", "Opção 8", "Opção 9", "Opção 10"
-];
-
-// Initial texts from image (approximate)
 const initialTexts = [
-    "???", // Top green one, hard to read
-    "evento de games",
-    "davi brito",
-    "serie do momento",
-    "filme do momento",
-    "???", // Bottom red one
-    "???", // Bottom blue
-    "covaco",
-    "???", // Yellow left
-    "pé em pé" // Red left
+    "???", "evento de games", "davi brito", "serie do momento", "filme do momento",
+    "???", "???", "covaco", "???", "pé em pé"
 ];
-// Use initialTexts if you want to start with them
-segmentTexts = [...initialTexts];
 
+let numSegments = 10;
+const MIN_SEGMENTS = 2;
+const MAX_SEGMENTS = 30; // Max reasonable segments for visibility
 
+let segmentTexts = [];
 let currentRotation = 0;
 let isSpinning = false;
+
+function initializeSegmentTexts() {
+    const currentTextCount = segmentTexts.length;
+    if (numSegments > currentTextCount) {
+        for (let i = currentTextCount; i < numSegments; i++) {
+            segmentTexts.push(initialTexts[i] || `Option ${i + 1}`);
+        }
+    } else if (numSegments < currentTextCount) {
+        segmentTexts.splice(numSegments); // Remove excess texts from the end
+    }
+    // Ensure segmentTexts has exactly numSegments items, filling with defaults if needed
+    while(segmentTexts.length < numSegments) {
+        segmentTexts.push(`Option ${segmentTexts.length + 1}`);
+    }
+    if (segmentTexts.length > numSegments) {
+        segmentTexts = segmentTexts.slice(0, numSegments);
+    }
+}
+
+
+function updateSegmentCountButtons() {
+    numSegmentsInput.value = numSegments;
+    addSegmentButton.disabled = numSegments >= MAX_SEGMENTS;
+    removeSegmentButton.disabled = numSegments <= MIN_SEGMENTS;
+}
+
+function handleAddSegment() {
+    if (numSegments < MAX_SEGMENTS) {
+        numSegments++;
+        segmentTexts.push(`Option ${numSegments}`); // Add new default text
+        updateAllUI();
+    }
+}
+
+function handleRemoveSegment() {
+    if (numSegments > MIN_SEGMENTS) {
+        numSegments--;
+        segmentTexts.pop(); // Remove last text
+        updateAllUI();
+    }
+}
 
 function createInputFields() {
     segmentInputsContainer.innerHTML = ''; // Clear existing
@@ -64,7 +88,7 @@ function createInputFields() {
         const input = document.createElement('input');
         input.type = 'text';
         input.id = `segment${i}`;
-        input.value = segmentTexts[i] || `Segment ${i+1}`;
+        input.value = segmentTexts[i] || `Segment ${i+1}`; // Fallback if text is missing
         input.dataset.index = i;
 
         div.appendChild(label);
@@ -75,30 +99,37 @@ function createInputFields() {
 
 function updateSegmentTextsFromInputs() {
     const inputs = segmentInputsContainer.querySelectorAll('input');
+    const newTexts = [];
     inputs.forEach(input => {
-        segmentTexts[input.dataset.index] = input.value;
+        newTexts[input.dataset.index] = input.value;
     });
+    segmentTexts = newTexts; // Update the main array
+    // Ensure segmentTexts array has the correct length, even if inputs were weird
+    while(segmentTexts.length < numSegments) segmentTexts.push(`Option ${segmentTexts.length + 1}`);
+    if(segmentTexts.length > numSegments) segmentTexts = segmentTexts.slice(0, numSegments);
+    
     drawWheel(); // Redraw with new texts
 }
 
-updateWheelButton.addEventListener('click', updateSegmentTextsFromInputs);
 
 function getFittedFontSize(text, segmentAngle, availableWidth) {
-    let fontSize = 20; // Max font size
-    const minFontSize = 8;
+    let fontSize = 18; // Max font size (reduced a bit for more segments)
+    const minFontSize = 7;
     ctx.font = `${fontSize}px Arial`;
     let textWidth = ctx.measureText(text).width;
 
-    // Reduce font size until text fits or minFontSize is reached
     while (textWidth > availableWidth && fontSize > minFontSize) {
         fontSize -= 1;
         ctx.font = `${fontSize}px Arial`;
         textWidth = ctx.measureText(text).width;
     }
+    // If still too wide even at minFontSize, it will overflow. Could add truncation here.
+    // e.g., if (textWidth > availableWidth && text.length > 5) text = text.substring(0, Math.floor(text.length * availableWidth / textWidth) - 3) + "...";
     return fontSize;
 }
 
 function drawWheel() {
+    if (numSegments === 0) return; // Should not happen with MIN_SEGMENTS
     const anglePerSegment = (2 * Math.PI) / numSegments;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -106,28 +137,27 @@ function drawWheel() {
         const startAngle = i * anglePerSegment;
         const endAngle = (i + 1) * anglePerSegment;
 
-        // Draw segment
         ctx.beginPath();
         ctx.moveTo(wheelRadius, wheelRadius);
         ctx.arc(wheelRadius, wheelRadius, wheelRadius, startAngle, endAngle);
         ctx.closePath();
         ctx.fillStyle = segmentColors[i % segmentColors.length];
         ctx.fill();
-        ctx.strokeStyle = '#333'; // Darker border for separation
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = (numSegments > 15) ? 1 : 2; // Thinner lines for more segments
         ctx.stroke();
 
-        // Draw text
         ctx.save();
-        ctx.translate(wheelRadius, wheelRadius); // Move origin to center
-        ctx.rotate(startAngle + anglePerSegment / 2); // Rotate to middle of segment
+        ctx.translate(wheelRadius, wheelRadius);
+        ctx.rotate(startAngle + anglePerSegment / 2);
 
         const text = segmentTexts[i] || "";
-        const textRadius = wheelRadius * (1 - innerRadiusFraction) * 0.7; // Position text radially
-        
-        // Estimate available width for text (chord length at textRadius, roughly)
-        // This is a heuristic. A more precise calculation would involve arc length.
-        const availableTextWidth = (wheelRadius * (1 - innerRadiusFraction) - (wheelRadius * innerRadiusFraction)) * 0.8;
+        // More conservative text radius and available width as segments get smaller
+        const textRadiusOuterMargin = (numSegments > 12) ? 0.15 : 0.1;
+        const textRadiusFactor = (numSegments > 18) ? 0.60 : 0.7;
+
+        const textRadius = wheelRadius * (1 - innerRadiusFraction - textRadiusOuterMargin) * textRadiusFactor;
+        const availableTextWidth = (wheelRadius * (1 - innerRadiusFraction) - (wheelRadius * innerRadiusFraction)) * 0.85 - (numSegments > 10 ? 10 : 0);
 
         const fontSize = getFittedFontSize(text, anglePerSegment, availableTextWidth);
         ctx.font = `bold ${fontSize}px Arial`;
@@ -135,12 +165,10 @@ function drawWheel() {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
-        // Draw text along the radial line, adjust x for better centering if needed
-        ctx.fillText(text, textRadius, 0); 
+        ctx.fillText(text, textRadius, 0);
         ctx.restore();
     }
 
-    // Draw central white circle
     ctx.beginPath();
     ctx.arc(wheelRadius, wheelRadius, wheelRadius * innerRadiusFraction, 0, 2 * Math.PI);
     ctx.fillStyle = 'white';
@@ -152,54 +180,60 @@ function drawWheel() {
 
 
 function spin() {
-    if (isSpinning) return;
+    if (isSpinning || numSegments < MIN_SEGMENTS) return;
     isSpinning = true;
     spinButton.disabled = true;
     winnerDisplay.textContent = "Spinning...";
 
-    // Calculate total rotation:
-    // At least a few full spins + random additional rotation
-    const fullSpins = Math.floor(Math.random() * 3) + 4; // 4-6 full spins
-    const randomExtraRotation = Math.random() * 360; // Random stopping point
+    const fullSpins = Math.floor(Math.random() * 3) + 4;
+    const randomExtraRotation = Math.random() * 360;
     const totalRotationDegrees = (fullSpins * 360) + randomExtraRotation;
-
-    // Use a smooth transition (cubic-bezier matches the CSS one for consistency)
-    // We'll apply this directly to the style for the animation.
-    // The actual JS calculation will determine the *final* angle.
     
     const finalRotationStyle = currentRotation + totalRotationDegrees;
     
-    canvas.style.transition = 'transform 5s cubic-bezier(0.15, 0.45, 0.35, 1)'; // Dynamic duration if needed
+    canvas.style.transition = 'transform 5s cubic-bezier(0.15, 0.45, 0.35, 1)';
     canvas.style.transform = `rotate(${finalRotationStyle}deg)`;
 
-    // After the CSS transition ends, calculate the winner
     setTimeout(() => {
-        currentRotation = finalRotationStyle % 360; // Normalize current rotation
+        currentRotation = finalRotationStyle % 360;
         
-        // The pointer is at the top (270 degrees or -90 degrees in mathematical terms)
-        // We need to find which segment aligns with this pointer.
-        // The wheel rotation is clockwise.
-        // A positive rotation means the top of the wheel moved clockwise.
-        // So, the segment at the top is effectively at (360 - currentRotation) degrees, adjusted for the pointer's 270deg position.
-        
-        let effectiveAngle = (360 - (currentRotation % 360) + 270) % 360; // Pointer is at 270 deg (top)
+        let effectiveAngle = (360 - (currentRotation % 360) + 270) % 360;
         
         const anglePerSegmentDegrees = 360 / numSegments;
         const winnerIndex = Math.floor(effectiveAngle / anglePerSegmentDegrees);
         
-        winnerDisplay.textContent = `Winner: ${segmentTexts[winnerIndex] || 'N/A'}`;
+        // Ensure winnerIndex is within bounds, especially if numSegments changed during spin (should not happen)
+        const safeWinnerIndex = Math.max(0, Math.min(winnerIndex, numSegments - 1));
+
+        winnerDisplay.textContent = `Winner: ${segmentTexts[safeWinnerIndex] || 'N/A'}`;
         isSpinning = false;
         spinButton.disabled = false;
         
-        // Reset transition so next spin isn't affected by previous one if spin() is called rapidly
-        // (though disabled button prevents this)
-        // canvas.style.transition = 'none';
-
-    }, 5000); // Match CSS transition duration
+    }, 5000);
 }
 
+function updateAllUI() {
+    updateSegmentCountButtons();
+    createInputFields();
+    drawWheel();
+}
+
+// Event Listeners
 spinButton.addEventListener('click', spin);
+updateWheelButton.addEventListener('click', () => {
+    updateSegmentTextsFromInputs(); // This already calls drawWheel
+});
+addSegmentButton.addEventListener('click', handleAddSegment);
+removeSegmentButton.addEventListener('click', handleRemoveSegment);
 
 // Initial setup
-createInputFields();
-drawWheel();
+function init() {
+    numSegments = parseInt(numSegmentsInput.value) || 10;
+    if (numSegments < MIN_SEGMENTS) numSegments = MIN_SEGMENTS;
+    if (numSegments > MAX_SEGMENTS) numSegments = MAX_SEGMENTS;
+    
+    initializeSegmentTexts(); // Populate segmentTexts based on initial numSegments and initialTexts
+    updateAllUI();
+}
+
+init();

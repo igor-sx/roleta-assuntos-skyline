@@ -15,11 +15,17 @@
     </div>
 
     <div class="controls">
-        <h2>Customize Segments</h2>
+        <h2>Customize Wheel</h2>
+        <div class="segment-count-controls">
+            <label for="numSegmentsInput">Number of Segments:</label>
+            <button id="removeSegmentButton" title="Remove Segment">-</button>
+            <input type="number" id="numSegmentsInput" value="10" min="2" max="30" readonly>
+            <button id="addSegmentButton" title="Add Segment">+</button>
+        </div>
         <div id="segmentInputs">
             <!-- Input fields will be generated here by JS -->
         </div>
-        <button id="updateWheelButton">Update Wheel</button>
+        <button id="updateWheelButton">Update Texts & Redraw</button>
     </div>
 
     <script src="script.js"></script>
