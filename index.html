@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roulette Wheel</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="roulette-container">
+        <div class="pointer"></div>
+        <canvas id="rouletteCanvas"></canvas>
+        <button id="spinButton">SPIN</button>
+        <div id="winnerDisplay">Winner: ---</div>
+    </div>
+
+    <div class="controls">
+        <h2>Customize Segments</h2>
+        <div id="segmentInputs">
+            <!-- Input fields will be generated here by JS -->
+        </div>
+        <button id="updateWheelButton">Update Wheel</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
